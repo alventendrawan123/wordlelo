@@ -16,7 +16,7 @@ Hard-won knowledge from shipping **Circlo** on Celo Mainnet, distilled for the
 
 ## When to use
 
-- Writing/editing any `.sol` in `contracts/`
+- Writing/editing any `.sol` in `sc/contracts/`
 - Designing storage layout, roles, or upgrade paths
 - Wiring backend → chain calls (the BE owns `WORD_SETTER`/`SETTLER` keys)
 - Deploying or verifying on Alfajores / Mainnet

@@ -32,7 +32,7 @@ day's commit–reveal, so the puzzle stays fair and the result stays verifiable.
 ```bash
 pnpm install
 # contracts
-cd contracts && forge test
+cd sc/contracts && forge test
 # backend
 cd backend && pnpm dev
 # frontend
