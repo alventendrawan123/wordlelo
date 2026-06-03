@@ -63,6 +63,15 @@ contract WordleGameTest is Test {
         return abi.encodePacked(r, s, v);
     }
 
+    /// @dev Commit + attest + submit a result for `player` in one step.
+    function _play(uint256 day, bool won) internal {
+        _commitDay(day);
+        uint8 guesses = won ? 3 : 6;
+        bytes memory sig = _attest(settlerPk, player, day, guesses, won, false);
+        vm.prank(player);
+        game.submitResult(day, guesses, won, false, sig);
+    }
+
     // -----------------------------------------------------------------
     // Init / lifecycle
     // -----------------------------------------------------------------
@@ -344,6 +353,93 @@ contract WordleGameTest is Test {
         assertEq(r.guesses, guesses);
         assertEq(r.won, won);
         assertEq(r.hardMode, hardMode);
+    }
+
+    // -----------------------------------------------------------------
+    // streak
+    // -----------------------------------------------------------------
+
+    function test_Streak_FirstWinIsOne() public {
+        _play(10, true);
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, 1);
+        assertEq(s.max, 1);
+        assertEq(s.lastDay, 10);
+    }
+
+    function test_Streak_FirstLossIsZero() public {
+        _play(5, false);
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, 0);
+        assertEq(s.max, 0);
+        assertEq(s.lastDay, 5);
+    }
+
+    function test_Streak_BuildsOnConsecutiveWins() public {
+        _play(1, true);
+        _play(2, true);
+        _play(3, true);
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, 3);
+        assertEq(s.max, 3);
+    }
+
+    function test_Streak_LossResets() public {
+        _play(1, true);
+        _play(2, true);
+        _play(3, false);
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, 0);
+        assertEq(s.max, 2);
+
+        _play(4, true);
+        s = game.getStreak(player);
+        assertEq(s.current, 1, "new streak after loss");
+        assertEq(s.max, 2, "max preserved");
+    }
+
+    function test_Streak_SkippedDayResets() public {
+        _play(1, true);
+        _play(2, true); // current 2
+        _play(4, true); // skipped day 3 -> restart at 1
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, 1);
+        assertEq(s.max, 2);
+    }
+
+    function test_Streak_MaxTracksPeak() public {
+        _play(1, true);
+        _play(2, true);
+        _play(3, true); // peak 3
+        _play(4, false); // reset
+        _play(5, true);
+        _play(6, true); // 2
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, 2);
+        assertEq(s.max, 3);
+    }
+
+    function test_SubmitResult_RevertOutOfOrder() public {
+        _play(5, true);
+
+        _commitDay(3);
+        bytes memory sig = _attest(settlerPk, player, 3, 3, true, false);
+        vm.prank(player);
+        vm.expectRevert(
+            abi.encodeWithSelector(WordleGame.OutOfOrder.selector, uint256(3), uint256(5))
+        );
+        game.submitResult(3, 3, true, false, sig);
+    }
+
+    function testFuzz_ConsecutiveWins(uint8 n) public {
+        uint256 count = bound(uint256(n), 1, 20);
+        for (uint256 d = 1; d <= count; d++) {
+            _play(d, true);
+        }
+        WordleGame.Streak memory s = game.getStreak(player);
+        assertEq(s.current, count);
+        assertEq(s.max, count);
+        assertEq(s.lastDay, count);
     }
 
     // -----------------------------------------------------------------

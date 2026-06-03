@@ -19,8 +19,8 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 /// @dev Backend-authoritative + commit–reveal: the secret word is never written
 ///      on-chain until the day closes — only a commitment hash and per-player
 ///      results live here. UUPS-upgradeable so game/reward logic can evolve.
-///      Commit–reveal and attested result submission are implemented here;
-///      streak math lands in a follow-up PR.
+///      Commit–reveal, attested result submission, and streak tracking are
+///      implemented here.
 contract WordleGame is
     Initializable,
     AccessControlUpgradeable,
@@ -115,6 +115,8 @@ contract WordleGame is
     error InvalidGuesses(uint8 guesses);
     /// @notice The attestation was not signed by a SETTLER_ROLE key.
     error InvalidAttestation();
+    /// @notice `day` was not strictly after the player's last settled day.
+    error OutOfOrder(uint256 day, uint256 lastDay);
 
     // ---------------------------------------------------------------------
     // Init
@@ -210,7 +212,27 @@ contract WordleGame is
 
         results[msg.sender][day] =
             Result({ guesses: guesses, won: won, hardMode: hardMode, at: uint40(block.timestamp) });
+        _bumpStreak(msg.sender, day, won);
         emit ResultSubmitted(msg.sender, day, guesses, won, hardMode);
+    }
+
+    /// @notice Update a player's streak after a settled result.
+    /// @dev Current streak counts consecutive-day wins: a win on the day right after
+    ///      the last settled day extends it, any gap (or first play) restarts it at 1,
+    ///      and a loss resets it to 0. Submissions must be strictly day-ordered per
+    ///      player (day indices are 1-based) so the streak can't be corrupted by
+    ///      out-of-order / backfilled results.
+    function _bumpStreak(address player, uint256 day, bool won) internal {
+        Streak storage s = streaks[player];
+        if (day <= s.lastDay) revert OutOfOrder(day, s.lastDay);
+
+        if (won) {
+            s.current = (day == s.lastDay + 1) ? s.current + 1 : 1;
+            if (s.current > s.max) s.max = s.current;
+        } else {
+            s.current = 0;
+        }
+        s.lastDay = day;
     }
 
     // ---------------------------------------------------------------------
