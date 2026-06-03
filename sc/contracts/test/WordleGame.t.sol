@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { WordleGame } from "../src/WordleGame.sol";
 
 contract WordleGameTest is Test {
@@ -11,6 +12,9 @@ contract WordleGameTest is Test {
     address internal admin = makeAddr("admin");
     address internal wordSetter = makeAddr("wordSetter");
     address internal stranger = makeAddr("stranger");
+    address internal player = makeAddr("player");
+    address internal settler;
+    uint256 internal settlerPk;
 
     uint256 internal constant DAY = 1234;
     string internal constant WORD = "crane";
@@ -27,10 +31,36 @@ contract WordleGameTest is Test {
         bytes32 wordSetterRole = game.WORD_SETTER_ROLE();
         vm.prank(admin);
         game.grantRole(wordSetterRole, wordSetter);
+
+        // Backend settler key that attests player results (Option B).
+        (settler, settlerPk) = makeAddrAndKey("settler");
+        bytes32 settlerRole = game.SETTLER_ROLE();
+        vm.prank(admin);
+        game.grantRole(settlerRole, settler);
     }
 
     function _commitment(string memory word, bytes32 salt) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(word, salt));
+    }
+
+    function _commitDay(uint256 day) internal {
+        vm.prank(wordSetter);
+        game.commitWord(day, _commitment(WORD, SALT));
+    }
+
+    /// @dev Build a SETTLER attestation signature matching the contract's digest.
+    function _attest(uint256 pk, address who, uint256 day, uint8 guesses, bool won, bool hardMode)
+        internal
+        view
+        returns (bytes memory)
+    {
+        bytes32 digest = MessageHashUtils.toEthSignedMessageHash(
+            keccak256(
+                abi.encodePacked(who, day, guesses, won, hardMode, address(game), block.chainid)
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+        return abi.encodePacked(r, s, v);
     }
 
     // -----------------------------------------------------------------
@@ -198,6 +228,122 @@ contract WordleGameTest is Test {
         vm.stopPrank();
 
         assertFalse(game.isRevealed(DAY));
+    }
+
+    // -----------------------------------------------------------------
+    // submitResult (attested, Option B)
+    // -----------------------------------------------------------------
+
+    function test_SubmitResult() public {
+        _commitDay(DAY);
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+
+        vm.expectEmit(true, true, false, true, address(game));
+        emit WordleGame.ResultSubmitted(player, DAY, 3, true, false);
+
+        vm.prank(player);
+        game.submitResult(DAY, 3, true, false, sig);
+
+        WordleGame.Result memory r = game.getResult(player, DAY);
+        assertEq(r.guesses, 3);
+        assertTrue(r.won);
+        assertFalse(r.hardMode);
+        assertEq(r.at, uint40(block.timestamp));
+    }
+
+    function test_SubmitResult_RevertBadGuessesZero() public {
+        _commitDay(DAY);
+        bytes memory sig = _attest(settlerPk, player, DAY, 0, false, false);
+        vm.prank(player);
+        vm.expectRevert(abi.encodeWithSelector(WordleGame.InvalidGuesses.selector, uint8(0)));
+        game.submitResult(DAY, 0, false, false, sig);
+    }
+
+    function test_SubmitResult_RevertBadGuessesSeven() public {
+        _commitDay(DAY);
+        bytes memory sig = _attest(settlerPk, player, DAY, 7, true, false);
+        vm.prank(player);
+        vm.expectRevert(abi.encodeWithSelector(WordleGame.InvalidGuesses.selector, uint8(7)));
+        game.submitResult(DAY, 7, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertNotCommitted() public {
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+        vm.prank(player);
+        vm.expectRevert(abi.encodeWithSelector(WordleGame.NotCommitted.selector, DAY));
+        game.submitResult(DAY, 3, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertDoubleSubmit() public {
+        _commitDay(DAY);
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+        vm.prank(player);
+        game.submitResult(DAY, 3, true, false, sig);
+
+        vm.prank(player);
+        vm.expectRevert(abi.encodeWithSelector(WordleGame.AlreadySubmitted.selector, DAY));
+        game.submitResult(DAY, 3, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertForgedSig() public {
+        _commitDay(DAY);
+        (, uint256 attackerPk) = makeAddrAndKey("attacker");
+        bytes memory sig = _attest(attackerPk, player, DAY, 1, true, false);
+        vm.prank(player);
+        vm.expectRevert(WordleGame.InvalidAttestation.selector);
+        game.submitResult(DAY, 1, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertWrongPlayer() public {
+        _commitDay(DAY);
+        // settler signs an attestation for `player`, but `stranger` tries to use it.
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+        vm.prank(stranger);
+        vm.expectRevert(WordleGame.InvalidAttestation.selector);
+        game.submitResult(DAY, 3, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertTamperedFields() public {
+        _commitDay(DAY);
+        // sig is over guesses=3, but the player submits guesses=1.
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+        vm.prank(player);
+        vm.expectRevert(WordleGame.InvalidAttestation.selector);
+        game.submitResult(DAY, 1, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertReplayDifferentDay() public {
+        _commitDay(DAY);
+        _commitDay(DAY + 1);
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+        vm.prank(player);
+        vm.expectRevert(WordleGame.InvalidAttestation.selector);
+        game.submitResult(DAY + 1, 3, true, false, sig);
+    }
+
+    function test_SubmitResult_RevertWhenPaused() public {
+        _commitDay(DAY);
+        vm.prank(admin);
+        game.pause();
+
+        bytes memory sig = _attest(settlerPk, player, DAY, 3, true, false);
+        vm.prank(player);
+        vm.expectRevert(); // EnforcedPause
+        game.submitResult(DAY, 3, true, false, sig);
+    }
+
+    function testFuzz_SubmitResult(uint8 guesses, bool won, bool hardMode) public {
+        guesses = uint8(bound(uint256(guesses), 1, 6));
+        _commitDay(DAY);
+        bytes memory sig = _attest(settlerPk, player, DAY, guesses, won, hardMode);
+
+        vm.prank(player);
+        game.submitResult(DAY, guesses, won, hardMode, sig);
+
+        WordleGame.Result memory r = game.getResult(player, DAY);
+        assertEq(r.guesses, guesses);
+        assertEq(r.won, won);
+        assertEq(r.hardMode, hardMode);
     }
 
     // -----------------------------------------------------------------
