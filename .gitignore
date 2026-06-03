@@ -25,11 +25,11 @@ secrets*.json
 next-env.d.ts
 
 # --- Foundry (contracts) ---
+# NOTE: lib/ is tracked as git submodules (forge install) — do not ignore it.
 cache/
 out/
 broadcast/
 !broadcast/**/dry-run/
-lib/forge-std/
 
 # --- Logs / misc ---
 *.log
