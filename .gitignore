@@ -1,0 +1,42 @@
+# --- Local builder notes (keep private, never publish) ---
+memory/
+
+# --- Node / pnpm ---
+node_modules/
+.pnpm-store/
+.pnp.*
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+deployer-key*
+secrets*.json
+
+# --- Next.js ---
+.next/
+next-env.d.ts
+
+# --- Foundry (contracts) ---
+cache/
+out/
+broadcast/
+!broadcast/**/dry-run/
+lib/forge-std/
+
+# --- Logs / misc ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
