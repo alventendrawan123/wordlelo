@@ -1,0 +1,45 @@
+name: contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sc/contracts/**"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    paths:
+      - "sc/contracts/**"
+      - ".github/workflows/contracts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: fmt + build + test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sc/contracts
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Show forge version
+        run: forge --version
+
+      - name: Check formatting
+        run: forge fmt --check
+
+      - name: Build
+        run: forge build --sizes
+
+      - name: Run tests
+        run: forge test -vvv
