@@ -17,9 +17,8 @@ import {
 /// @dev Backend-authoritative + commit–reveal: the secret word is never written
 ///      on-chain until the day closes — only a commitment hash and per-player
 ///      results live here. UUPS-upgradeable so game/reward logic can evolve.
-///      This is the scaffold: storage layout, roles, and lifecycle only. The
-///      game functions (commitWord / revealWord / submitResult / streaks) land
-///      in follow-up PRs against this same surface.
+///      Daily-word commit–reveal is implemented here; player result submission
+///      (with backend ECDSA attestation) and streak math land in follow-up PRs.
 contract WordleGame is
     Initializable,
     AccessControlUpgradeable,
@@ -77,6 +76,32 @@ contract WordleGame is
     mapping(address => Streak) public streaks;
 
     // ---------------------------------------------------------------------
+    // Events
+    // ---------------------------------------------------------------------
+
+    /// @notice Emitted when the backend commits a day's word hash.
+    event WordCommitted(uint256 indexed day, bytes32 commitment);
+    /// @notice Emitted when a day's word is revealed after it closes.
+    event WordRevealed(uint256 indexed day, string word);
+
+    // ---------------------------------------------------------------------
+    // Errors
+    // ---------------------------------------------------------------------
+
+    /// @notice Commitment hash was zero.
+    error EmptyCommitment();
+    /// @notice A word was already committed for `day` (commitments are immutable).
+    error AlreadyCommitted(uint256 day);
+    /// @notice No commitment exists for `day`.
+    error NotCommitted(uint256 day);
+    /// @notice `day` has already been revealed.
+    error AlreadyRevealed(uint256 day);
+    /// @notice keccak256(word, salt) did not match the commitment for `day`.
+    error RevealMismatch(uint256 day);
+    /// @notice Revealed word was empty (the revealed-state sentinel must be non-empty).
+    error EmptyWord();
+
+    // ---------------------------------------------------------------------
     // Init
     // ---------------------------------------------------------------------
 
@@ -98,6 +123,43 @@ contract WordleGame is
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(UPGRADER_ROLE, admin);
         _grantRole(PAUSER_ROLE, admin);
+    }
+
+    // ---------------------------------------------------------------------
+    // Daily word — commit–reveal
+    // ---------------------------------------------------------------------
+
+    /// @notice Commit the hash of a day's word before that day opens.
+    /// @dev Commitment is `keccak256(abi.encodePacked(word, salt))`. Exactly one
+    ///      commit per day — it can never be overwritten, which is what stops the
+    ///      backend from swapping the answer mid-day. Reveal timing (only after
+    ///      the day closes) is enforced off-chain by the backend.
+    /// @param day puzzle-day index (the backend's day scheme)
+    /// @param commitment keccak256(abi.encodePacked(word, salt))
+    function commitWord(uint256 day, bytes32 commitment) external onlyRole(WORD_SETTER_ROLE) {
+        if (commitment == bytes32(0)) revert EmptyCommitment();
+        if (wordCommit[day] != bytes32(0)) revert AlreadyCommitted(day);
+
+        wordCommit[day] = commitment;
+        emit WordCommitted(day, commitment);
+    }
+
+    /// @notice Reveal a day's word after it closes; must match the commitment.
+    /// @param day puzzle-day index
+    /// @param word the plaintext answer
+    /// @param salt the salt used when committing
+    function revealWord(uint256 day, string calldata word, bytes32 salt)
+        external
+        onlyRole(WORD_SETTER_ROLE)
+    {
+        bytes32 commitment = wordCommit[day];
+        if (commitment == bytes32(0)) revert NotCommitted(day);
+        if (bytes(revealedWord[day]).length != 0) revert AlreadyRevealed(day);
+        if (bytes(word).length == 0) revert EmptyWord();
+        if (keccak256(abi.encodePacked(word, salt)) != commitment) revert RevealMismatch(day);
+
+        revealedWord[day] = word;
+        emit WordRevealed(day, word);
     }
 
     // ---------------------------------------------------------------------
@@ -127,6 +189,11 @@ contract WordleGame is
 
     function getStreak(address player) external view returns (Streak memory) {
         return streaks[player];
+    }
+
+    /// @notice Whether a day's word has been revealed yet.
+    function isRevealed(uint256 day) external view returns (bool) {
+        return bytes(revealedWord[day]).length != 0;
     }
 
     // ---------------------------------------------------------------------
