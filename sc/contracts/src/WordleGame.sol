@@ -11,20 +11,25 @@ import {
 import {
     PausableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /// @title WordleGame
 /// @notice On-chain settlement for the Wordlelo daily word game on Celo.
 /// @dev Backend-authoritative + commit–reveal: the secret word is never written
 ///      on-chain until the day closes — only a commitment hash and per-player
 ///      results live here. UUPS-upgradeable so game/reward logic can evolve.
-///      Daily-word commit–reveal is implemented here; player result submission
-///      (with backend ECDSA attestation) and streak math land in follow-up PRs.
+///      Commit–reveal and attested result submission are implemented here;
+///      streak math lands in a follow-up PR.
 contract WordleGame is
     Initializable,
     AccessControlUpgradeable,
     PausableUpgradeable,
     UUPSUpgradeable
 {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+
     // ---------------------------------------------------------------------
     // Roles
     // ---------------------------------------------------------------------
@@ -83,6 +88,10 @@ contract WordleGame is
     event WordCommitted(uint256 indexed day, bytes32 commitment);
     /// @notice Emitted when a day's word is revealed after it closes.
     event WordRevealed(uint256 indexed day, string word);
+    /// @notice Emitted when a player settles their result for a day.
+    event ResultSubmitted(
+        address indexed player, uint256 indexed day, uint8 guesses, bool won, bool hardMode
+    );
 
     // ---------------------------------------------------------------------
     // Errors
@@ -100,6 +109,12 @@ contract WordleGame is
     error RevealMismatch(uint256 day);
     /// @notice Revealed word was empty (the revealed-state sentinel must be non-empty).
     error EmptyWord();
+    /// @notice Player already submitted a result for `day`.
+    error AlreadySubmitted(uint256 day);
+    /// @notice `guesses` was not in the range 1..6.
+    error InvalidGuesses(uint8 guesses);
+    /// @notice The attestation was not signed by a SETTLER_ROLE key.
+    error InvalidAttestation();
 
     // ---------------------------------------------------------------------
     // Init
@@ -160,6 +175,42 @@ contract WordleGame is
 
         revealedWord[day] = word;
         emit WordRevealed(day, word);
+    }
+
+    // ---------------------------------------------------------------------
+    // Player results
+    // ---------------------------------------------------------------------
+
+    /// @notice Settle a player's result for a day, authorized by a backend attestation.
+    /// @dev Option B: the player sends their OWN tx (so each genuine player is a real
+    ///      on-chain DAU). The backend (SETTLER_ROLE) signs an EIP-191 digest over
+    ///      keccak256(abi.encodePacked(player, day, guesses, won, hardMode, address(this),
+    ///      block.chainid)). Binding address(this) + chainid blocks cross-contract /
+    ///      cross-chain replay; one result per (player, day) blocks same-chain replay.
+    ///      MiniPay note: this is a wallet-side tx — the frontend must send type "legacy".
+    /// @param day puzzle-day index
+    /// @param guesses guesses used, 1..6
+    /// @param won whether the player solved it
+    /// @param hardMode whether hard mode was on
+    /// @param sig backend SETTLER signature over the attestation digest
+    function submitResult(uint256 day, uint8 guesses, bool won, bool hardMode, bytes calldata sig)
+        external
+        whenNotPaused
+    {
+        if (guesses < 1 || guesses > 6) revert InvalidGuesses(guesses);
+        if (wordCommit[day] == bytes32(0)) revert NotCommitted(day);
+        if (results[msg.sender][day].at != 0) revert AlreadySubmitted(day);
+
+        bytes32 digest = keccak256(
+                abi.encodePacked(
+                    msg.sender, day, guesses, won, hardMode, address(this), block.chainid
+                )
+            ).toEthSignedMessageHash();
+        if (!hasRole(SETTLER_ROLE, digest.recover(sig))) revert InvalidAttestation();
+
+        results[msg.sender][day] =
+            Result({ guesses: guesses, won: won, hardMode: hardMode, at: uint40(block.timestamp) });
+        emit ResultSubmitted(msg.sender, day, guesses, won, hardMode);
     }
 
     // ---------------------------------------------------------------------
