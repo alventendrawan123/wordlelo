@@ -1,0 +1,10 @@
+# Foundry build artifacts
+out/
+cache/
+broadcast/
+!broadcast/**/dry-run/
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
