@@ -2,25 +2,133 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1a1b;
+  --correct: #6aaa64;
+  --present: #c9b458;
+  --absent: #787c7e;
+  --tile-border: #d3d6da;
+  --tile-border-filled: #878a8c;
+  --tile-text: #ffffff;
+  --key-bg: #d3d6da;
+  --key-text: #1a1a1b;
+}
+
+[data-theme="dark"] {
+  --background: #121213;
+  --foreground: #ffffff;
+  --correct: #538d4e;
+  --present: #b59f3b;
+  --absent: #3a3a3c;
+  --tile-border: #3a3a3c;
+  --tile-border-filled: #565758;
+  --key-bg: #818384;
+  --key-text: #ffffff;
+}
+
+[data-colorblind="true"] {
+  --correct: #f5793a;
+  --present: #85c0f9;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-correct: var(--correct);
+  --color-present: var(--present);
+  --color-absent: var(--absent);
+  --color-tile-border: var(--tile-border);
+  --color-tile-border-filled: var(--tile-border-filled);
+  --color-tile-text: var(--tile-text);
+  --color-key: var(--key-bg);
+  --color-key-text: var(--key-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes tile-pop {
+  from {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes tile-flip {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+@keyframes row-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes row-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-12px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+}
+
+.anim-pop {
+  animation: tile-pop 100ms ease-in-out;
+}
+.anim-flip {
+  animation: tile-flip 500ms ease forwards;
+}
+.anim-shake {
+  animation: row-shake 600ms ease-in-out;
+}
+.anim-bounce {
+  animation: row-bounce 800ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-pop,
+  .anim-flip,
+  .anim-shake,
+  .anim-bounce {
+    animation: none;
+  }
 }
