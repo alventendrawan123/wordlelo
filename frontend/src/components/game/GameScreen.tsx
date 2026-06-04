@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/feedback/ToastProvider";
 import { Header } from "@/components/layout/Header";
 import { HelpModal } from "@/components/modals/HelpModal";
+import { SettingsModal } from "@/components/modals/SettingsModal";
 import { StatsModal } from "@/components/stats/StatsModal";
 import { useGameStats } from "@/hooks/useGameStats";
 import type { SubmittedRow } from "@/hooks/useWordleGame";
@@ -11,7 +12,7 @@ import { useWordleGame } from "@/hooks/useWordleGame";
 import { Board } from "./Board";
 import { Keyboard } from "./Keyboard";
 
-type ModalKind = "help" | "stats" | null;
+type ModalKind = "help" | "stats" | "settings" | null;
 
 interface BoardAreaProps {
   loading: boolean;
@@ -77,6 +78,7 @@ export function GameScreen() {
       <Header
         onOpenHelp={() => setModal("help")}
         onOpenStats={() => setModal("stats")}
+        onOpenSettings={() => setModal("settings")}
       />
 
       <main className="flex flex-1 flex-col items-center justify-between gap-6 px-4 py-6">
@@ -97,6 +99,13 @@ export function GameScreen() {
         onClose={() => setModal(null)}
         stats={stats}
         highlightRow={highlightRow}
+      />
+      <SettingsModal
+        open={modal === "settings"}
+        onClose={() => setModal(null)}
+        hardMode={game.hardMode}
+        hardModeLocked={game.rows.length > 0}
+        onToggleHardMode={() => game.setHardMode(!game.hardMode)}
       />
     </div>
   );
