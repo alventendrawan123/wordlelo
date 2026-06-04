@@ -113,6 +113,13 @@ contract WordleGameTest is Test {
         game.initialize(admin);
     }
 
+    function test_InitializeRevertsForZeroAdmin() public {
+        WordleGame impl = new WordleGame();
+        bytes memory initData = abi.encodeCall(WordleGame.initialize, (address(0)));
+        vm.expectRevert(WordleGame.ZeroAdmin.selector);
+        new ERC1967Proxy(address(impl), initData);
+    }
+
     function test_ImplementationInitializersDisabled() public {
         WordleGame impl = new WordleGame();
         vm.expectRevert();

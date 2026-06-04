@@ -117,6 +117,8 @@ contract WordleGame is
     error InvalidAttestation();
     /// @notice `day` was not strictly after the player's last settled day.
     error OutOfOrder(uint256 day, uint256 lastDay);
+    /// @notice initialize() was called with a zero admin address.
+    error ZeroAdmin();
 
     // ---------------------------------------------------------------------
     // Init
@@ -131,7 +133,7 @@ contract WordleGame is
     /// @dev WORD_SETTER_ROLE and SETTLER_ROLE are granted post-deploy by the admin
     ///      to the backend keys, so they can be rotated independently.
     function initialize(address admin) external initializer {
-        require(admin != address(0), "admin=0");
+        if (admin == address(0)) revert ZeroAdmin();
 
         __AccessControl_init();
         __Pausable_init();
