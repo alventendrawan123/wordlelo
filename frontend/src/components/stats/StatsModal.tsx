@@ -1,4 +1,7 @@
+import { Countdown } from "@/components/layout/Countdown";
 import { Modal } from "@/components/modals/Modal";
+import { ShareButton } from "@/components/share/ShareButton";
+import type { ShareOptions } from "@/lib/game/share";
 import type { Stats } from "@/types/game";
 import { GuessDistribution } from "./GuessDistribution";
 
@@ -16,6 +19,8 @@ export interface StatsModalProps {
   onClose: () => void;
   stats: Stats;
   highlightRow?: number | null;
+  shareOptions?: ShareOptions | null;
+  closesAt?: string | null;
 }
 
 export function StatsModal({
@@ -23,6 +28,8 @@ export function StatsModal({
   onClose,
   stats,
   highlightRow = null,
+  shareOptions = null,
+  closesAt = null,
 }: StatsModalProps) {
   const winPct =
     stats.played === 0 ? 0 : Math.round((stats.wins / stats.played) * 100);
@@ -42,6 +49,12 @@ export function StatsModal({
         distribution={stats.distribution}
         highlightRow={highlightRow}
       />
+      {shareOptions ? (
+        <div className="mt-6 flex items-center justify-between gap-4 border-t border-tile-border pt-4">
+          <Countdown closesAt={closesAt} />
+          <ShareButton options={shareOptions} />
+        </div>
+      ) : null}
     </Modal>
   );
 }

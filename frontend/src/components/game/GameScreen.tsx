@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/components/feedback/ToastProvider";
 import { Header } from "@/components/layout/Header";
 import { HelpModal } from "@/components/modals/HelpModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { StatsModal } from "@/components/stats/StatsModal";
+import { useTheme } from "@/components/theme/ThemeProvider";
 import { useGameStats } from "@/hooks/useGameStats";
 import type { SubmittedRow } from "@/hooks/useWordleGame";
 import { useWordleGame } from "@/hooks/useWordleGame";
+import type { ShareOptions } from "@/lib/game/share";
+import { MAX_GUESSES } from "@/types/game";
 import { Board } from "./Board";
 import { Keyboard } from "./Keyboard";
 
@@ -50,6 +53,7 @@ function BoardArea({
 
 export function GameScreen() {
   const { showToast } = useToast();
+  const { colorblind } = useTheme();
   const { stats, recordResult } = useGameStats();
   const [modal, setModal] = useState<ModalKind>(null);
   const [highlightRow, setHighlightRow] = useState<number | null>(null);
@@ -72,6 +76,24 @@ export function GameScreen() {
       showToast(game.message.text);
     }
   }, [game.message, showToast]);
+
+  const shareOptions = useMemo<ShareOptions | null>(() => {
+    if (!game.puzzle) {
+      return null;
+    }
+    if (game.gameState !== "won" && game.gameState !== "lost") {
+      return null;
+    }
+    return {
+      day: game.puzzle.day,
+      guesses: game.rows.length,
+      maxGuesses: MAX_GUESSES,
+      won: game.gameState === "won",
+      hardMode: game.hardMode,
+      colorblind,
+      rows: game.rows.map((row) => row.marks),
+    };
+  }, [game.puzzle, game.gameState, game.rows, game.hardMode, colorblind]);
 
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
@@ -99,6 +121,8 @@ export function GameScreen() {
         onClose={() => setModal(null)}
         stats={stats}
         highlightRow={highlightRow}
+        shareOptions={shareOptions}
+        closesAt={game.puzzle?.closesAt ?? null}
       />
       <SettingsModal
         open={modal === "settings"}
