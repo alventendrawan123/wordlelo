@@ -27,6 +27,20 @@ the green/yellow/gray feedback. Game *results* (win/loss, guess count, streak) a
 settled on-chain — the secret word itself is never written to the chain until the
 day's commit–reveal, so the puzzle stays fair and the result stays verifiable.
 
+## Deployed contracts (Celo mainnet)
+
+| | Address |
+|---|---|
+| `WordleGame` (proxy) | [`0x1b444313a61be61830d4983dCe350A018C288600`](https://celoscan.io/address/0x1b444313a61be61830d4983dCe350A018C288600) |
+| Implementation | `0x31F26f77F73dBB7ac9A03415D73d46AE81CF8af1` |
+
+UUPS-upgradeable — always interact with the **proxy**. The ABI and addresses are
+published from the `@wordlelo/contracts` package for the backend and frontend:
+
+```ts
+import { wordleGameAbi, WORDLE_GAME_ADDRESS } from "@wordlelo/contracts";
+```
+
 ## Getting started
 
 ```bash
