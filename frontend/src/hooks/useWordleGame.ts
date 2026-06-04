@@ -66,7 +66,12 @@ function deriveKeyStates(rows: SubmittedRow[]): KeyboardState {
   );
 }
 
-export function useWordleGame() {
+export interface UseWordleGameOptions {
+  onComplete?: (won: boolean, guesses: number) => void;
+}
+
+export function useWordleGame(options: UseWordleGameOptions = {}) {
+  const { onComplete } = options;
   const [puzzle, setPuzzle] = useState<DailyPuzzle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -168,9 +173,11 @@ export function useWordleGame() {
       if (result.won) {
         setGameState("won");
         notify("Splendid!");
+        onComplete?.(true, nextRows.length);
       } else if (nextRows.length >= MAX_GUESSES) {
         setGameState("lost");
         notify("Better luck next time");
+        onComplete?.(false, nextRows.length);
       }
     } catch (err) {
       notify(isGameApiError(err) ? err.message : "Something went wrong");
@@ -178,7 +185,7 @@ export function useWordleGame() {
     } finally {
       setBusy(false);
     }
-  }, [busy, gameState, current, hardMode, rows, notify, shake]);
+  }, [busy, gameState, current, hardMode, rows, notify, shake, onComplete]);
 
   const handleKey = useCallback(
     (rawKey: string) => {

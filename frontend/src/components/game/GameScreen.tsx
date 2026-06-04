@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/feedback/ToastProvider";
+import { Header } from "@/components/layout/Header";
+import { HelpModal } from "@/components/modals/HelpModal";
+import { StatsModal } from "@/components/stats/StatsModal";
+import { useGameStats } from "@/hooks/useGameStats";
 import type { SubmittedRow } from "@/hooks/useWordleGame";
 import { useWordleGame } from "@/hooks/useWordleGame";
 import { Board } from "./Board";
 import { Keyboard } from "./Keyboard";
+
+type ModalKind = "help" | "stats" | null;
 
 interface BoardAreaProps {
   loading: boolean;
@@ -42,8 +48,21 @@ function BoardArea({
 }
 
 export function GameScreen() {
-  const game = useWordleGame();
   const { showToast } = useToast();
+  const { stats, recordResult } = useGameStats();
+  const [modal, setModal] = useState<ModalKind>(null);
+  const [highlightRow, setHighlightRow] = useState<number | null>(null);
+
+  const handleComplete = useCallback(
+    (won: boolean, guesses: number) => {
+      recordResult(won, guesses);
+      setHighlightRow(won ? guesses : null);
+      window.setTimeout(() => setModal("stats"), 1200);
+    },
+    [recordResult],
+  );
+
+  const game = useWordleGame({ onComplete: handleComplete });
   const lastToastId = useRef(0);
 
   useEffect(() => {
@@ -55,11 +74,10 @@ export function GameScreen() {
 
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
-      <header className="flex items-center justify-center border-b border-tile-border px-4 py-3">
-        <h1 className="text-3xl font-bold uppercase tracking-[0.3em]">
-          Wordlelo
-        </h1>
-      </header>
+      <Header
+        onOpenHelp={() => setModal("help")}
+        onOpenStats={() => setModal("stats")}
+      />
 
       <main className="flex flex-1 flex-col items-center justify-between gap-6 px-4 py-6">
         <BoardArea
@@ -72,6 +90,14 @@ export function GameScreen() {
 
         <Keyboard keyStates={game.keyStates} onKey={game.handleKey} />
       </main>
+
+      <HelpModal open={modal === "help"} onClose={() => setModal(null)} />
+      <StatsModal
+        open={modal === "stats"}
+        onClose={() => setModal(null)}
+        stats={stats}
+        highlightRow={highlightRow}
+      />
     </div>
   );
 }
