@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useToast } from "@/components/feedback/ToastProvider";
 import type { SubmittedRow } from "@/hooks/useWordleGame";
 import { useWordleGame } from "@/hooks/useWordleGame";
 import { Board } from "./Board";
@@ -41,6 +43,15 @@ function BoardArea({
 
 export function GameScreen() {
   const game = useWordleGame();
+  const { showToast } = useToast();
+  const lastToastId = useRef(0);
+
+  useEffect(() => {
+    if (game.message && game.message.id !== lastToastId.current) {
+      lastToastId.current = game.message.id;
+      showToast(game.message.text);
+    }
+  }, [game.message, showToast]);
 
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
@@ -50,22 +61,7 @@ export function GameScreen() {
         </h1>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-between gap-4 px-4 py-4">
-        <div
-          className="flex h-7 items-center justify-center"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {game.message ? (
-            <span
-              key={game.message.id}
-              className="rounded bg-foreground px-3 py-1 text-sm font-semibold text-background"
-            >
-              {game.message.text}
-            </span>
-          ) : null}
-        </div>
-
+      <main className="flex flex-1 flex-col items-center justify-between gap-6 px-4 py-6">
         <BoardArea
           loading={game.loading}
           error={game.error}
