@@ -15,6 +15,6 @@
     "rules": { "recommended": true }
   },
   "files": {
-    "ignore": ["dist", "node_modules", "sc/**", ".github/**"]
+    "ignore": ["dist", "node_modules", "sc/**", ".github/**", "packages/contracts/src/abi.ts"]
   }
 }
