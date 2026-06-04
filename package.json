@@ -1,0 +1,19 @@
+{
+  "name": "wordlelo",
+  "private": true,
+  "type": "module",
+  "description": "Wordlelo — a daily word-guessing game on Celo (Proof of Ship)",
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "be:dev": "pnpm --filter @wordlelo/be dev",
+    "be:build": "pnpm --filter @wordlelo/be build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+  }
+}
