@@ -1,4 +1,5 @@
 import { Board } from "@/components/game/Board";
+import { Keyboard } from "@/components/game/Keyboard";
 
 export function MainPage() {
   return (
@@ -8,11 +9,11 @@ export function MainPage() {
           Wordlelo
         </h1>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-6">
-        <Board rows={[]} current="" />
-        <p className="text-sm text-foreground/60">
-          Daily word · 6 guesses · settles on Celo
-        </p>
+      <main className="flex flex-1 flex-col items-center justify-between gap-6 px-4 py-4">
+        <div className="flex flex-1 items-center">
+          <Board rows={[]} current="" />
+        </div>
+        <Keyboard keyStates={{}} />
       </main>
     </div>
   );
