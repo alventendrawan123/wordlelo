@@ -26,5 +26,7 @@ celo = "https://forno.celo.org"
 alfajores = "https://alfajores-forno.celo-testnet.org"
 
 [etherscan]
-celo = { key = "${CELOSCAN_API_KEY}", chain = 42220, url = "https://api.celoscan.io/api" }
-alfajores = { key = "${CELOSCAN_API_KEY}", chain = 44787, url = "https://api-alfajores.celoscan.io/api" }
+# Etherscan API V2 unified endpoint (one key, chainid selects the chain). The legacy
+# Celoscan V1 endpoints are deprecated. A single Etherscan/Celoscan key works for both.
+celo = { key = "${CELOSCAN_API_KEY}", chain = 42220, url = "https://api.etherscan.io/v2/api?chainid=42220" }
+alfajores = { key = "${CELOSCAN_API_KEY}", chain = 44787, url = "https://api.etherscan.io/v2/api?chainid=44787" }
