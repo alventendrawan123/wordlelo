@@ -20,22 +20,23 @@ contract Deploy is Script {
         game = WordleGame(proxy);
     }
 
-    /// @notice Deploy + wire backend roles, broadcasting with PRIVATE_KEY.
-    /// @dev Env: PRIVATE_KEY (required); ADMIN / WORD_SETTER / SETTLER (optional,
-    ///      default to the deployer). Backend role grants run only when the
-    ///      deployer is the admin; otherwise a separate admin grants them after.
+    /// @notice Deploy + wire backend roles using whatever signer forge is given.
+    /// @dev Signer comes from the forge flag — keystore (`--account`), `--ledger`,
+    ///      or `--private-key` — so no plaintext key needs to live in the env.
+    ///      Optional env overrides: ADMIN / WORD_SETTER / SETTLER (default: deployer).
+    ///      Backend role grants run only when the deployer is the admin; otherwise
+    ///      a separate admin grants them after deploy.
     ///
-    ///      Alfajores:
-    ///        PRIVATE_KEY=0x.. forge script script/Deploy.s.sol:Deploy \
-    ///          --rpc-url alfajores --broadcast --verify
+    ///      Alfajores dry-run, then Celo mainnet (encrypted keystore):
+    ///        forge script script/Deploy.s.sol:Deploy --rpc-url alfajores --account deployer --broadcast --verify
+    ///        forge script script/Deploy.s.sol:Deploy --rpc-url celo      --account deployer --broadcast --verify
     function run() external returns (WordleGame game, address proxy) {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(pk);
+        address deployer = msg.sender;
         address admin = vm.envOr("ADMIN", deployer);
         address wordSetter = vm.envOr("WORD_SETTER", deployer);
         address settler = vm.envOr("SETTLER", deployer);
 
-        vm.startBroadcast(pk);
+        vm.startBroadcast();
 
         WordleGame impl;
         (game, impl, proxy) = deploy(admin);
