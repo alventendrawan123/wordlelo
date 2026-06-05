@@ -10,7 +10,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "commit:day": "tsx src/scripts/commit.ts",
+    "reveal:day": "tsx src/scripts/reveal.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
