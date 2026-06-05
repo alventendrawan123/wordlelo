@@ -1,0 +1,52 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "be/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "be/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/backend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: build + test + lint (be + packages)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (be + its workspace deps)
+        run: pnpm --filter "@wordlelo/be..." build
+
+      - name: Lint (Biome)
+        run: pnpm exec biome check be packages
+
+      - name: Test
+        run: pnpm --filter "@wordlelo/be..." test
