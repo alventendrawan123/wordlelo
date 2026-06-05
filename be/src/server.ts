@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import Fastify, { type FastifyInstance } from "fastify";
 import { config } from "./config.js";
 import { registerErrorHandler } from "./errors.js";
+import { attestationRoutes } from "./routes/attestation.js";
 import { puzzleRoutes } from "./routes/puzzle.js";
 
 /**
@@ -24,6 +25,7 @@ export function buildServer(): FastifyInstance {
   }));
 
   app.register(puzzleRoutes, { prefix: "/api/v1/puzzle" });
+  app.register(attestationRoutes, { prefix: "/api/v1/puzzle" });
 
   return app;
 }
