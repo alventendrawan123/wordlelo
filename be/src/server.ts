@@ -1,21 +1,29 @@
+import cors from "@fastify/cors";
 import Fastify, { type FastifyInstance } from "fastify";
+import { config } from "./config.js";
+import { registerErrorHandler } from "./errors.js";
+import { puzzleRoutes } from "./routes/puzzle.js";
 
 /**
  * Build the Wordlelo backend (Celo) Fastify app.
  *
- * No network side effects — so it can be inject/unit-tested. The listen
- * entrypoint lives in index.ts. Upcoming PRs add the 2-pass scoring engine,
- * daily-word commit/reveal management, and the SETTLER attestation signer
- * that authorizes on-chain `submitResult` for the Celo contract.
+ * No network side effects — so it can be inject/unit-tested. Routes: `/health`
+ * and the `/api/v1/puzzle/*` game API. The listen entrypoint lives in index.ts.
+ * The SETTLER attestation signer + SIWE auth land in follow-up work.
  */
 export function buildServer(): FastifyInstance {
   const app = Fastify({ logger: true });
+
+  app.register(cors, { origin: config.corsOrigin });
+  registerErrorHandler(app);
 
   app.get("/health", async () => ({
     status: "ok",
     service: "wordlelo-be",
     chain: "celo",
   }));
+
+  app.register(puzzleRoutes, { prefix: "/api/v1/puzzle" });
 
   return app;
 }
