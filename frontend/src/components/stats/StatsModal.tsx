@@ -1,6 +1,7 @@
 import { Countdown } from "@/components/layout/Countdown";
 import { Modal } from "@/components/modals/Modal";
 import { ShareButton } from "@/components/share/ShareButton";
+import { SettleResult } from "@/components/web3/SettleResult";
 import type { OnChainStreak } from "@/hooks/useOnChainStreak";
 import type { ShareOptions } from "@/lib/game/share";
 import type { Stats } from "@/types/game";
@@ -62,9 +63,12 @@ export function StatsModal({
         highlightRow={highlightRow}
       />
       {shareOptions ? (
-        <div className="mt-6 flex items-center justify-between gap-4 border-t border-tile-border pt-4">
-          <Countdown closesAt={closesAt} />
-          <ShareButton options={shareOptions} />
+        <div className="mt-6 space-y-3 border-t border-tile-border pt-4">
+          <SettleResult />
+          <div className="flex items-center justify-between gap-4">
+            <Countdown closesAt={closesAt} />
+            <ShareButton options={shareOptions} />
+          </div>
         </div>
       ) : null}
     </Modal>
