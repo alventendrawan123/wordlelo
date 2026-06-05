@@ -1,3 +1,4 @@
+import { OnChainBadge } from "@/components/web3/OnChainBadge";
 import type { LetterState } from "@/types/game";
 import { Modal } from "./Modal";
 
@@ -45,6 +46,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
           </li>
         </ul>
         <p>A new puzzle drops every day — and your result settles on Celo.</p>
+        <OnChainBadge />
       </div>
     </Modal>
   );
