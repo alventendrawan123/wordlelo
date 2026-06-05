@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAccount } from "wagmi";
 import { useToast } from "@/components/feedback/ToastProvider";
 import { Header } from "@/components/layout/Header";
 import { HelpModal } from "@/components/modals/HelpModal";
@@ -8,6 +9,7 @@ import { SettingsModal } from "@/components/modals/SettingsModal";
 import { StatsModal } from "@/components/stats/StatsModal";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useGameStats } from "@/hooks/useGameStats";
+import { useOnChainStreak } from "@/hooks/useOnChainStreak";
 import type { SubmittedRow } from "@/hooks/useWordleGame";
 import { useWordleGame } from "@/hooks/useWordleGame";
 import type { ShareOptions } from "@/lib/game/share";
@@ -55,6 +57,8 @@ export function GameScreen() {
   const { showToast } = useToast();
   const { colorblind } = useTheme();
   const { stats, recordResult } = useGameStats();
+  const { address } = useAccount();
+  const onChainStreak = useOnChainStreak(address);
   const [modal, setModal] = useState<ModalKind>(null);
   const [highlightRow, setHighlightRow] = useState<number | null>(null);
 
@@ -123,6 +127,7 @@ export function GameScreen() {
         highlightRow={highlightRow}
         shareOptions={shareOptions}
         closesAt={game.puzzle?.closesAt ?? null}
+        onChainStreak={onChainStreak}
       />
       <SettingsModal
         open={modal === "settings"}
