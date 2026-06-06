@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   title: "Wordlelo — daily word game on Celo",
   description:
     "A faithful Wordle clone: one 5-letter puzzle a day, settled on Celo.",
+  applicationName: "Wordlelo",
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  appleWebApp: { capable: true, title: "Wordlelo", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#121213" },
+  ],
 };
 
 export default function RootLayout({
