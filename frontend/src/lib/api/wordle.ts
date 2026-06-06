@@ -67,15 +67,21 @@ function mockSubmitGuess({ guess }: SubmitGuessRequest): Promise<GuessResult> {
   return Promise.resolve({ marks, won: isWin(marks) });
 }
 
-function mockGetAttestation(): Promise<Attestation> {
+export interface AttestationRequest {
+  player: string;
+  guesses: string[];
+  hardMode: boolean;
+}
+
+function mockGetAttestation(req: AttestationRequest): Promise<Attestation> {
   const zeroAddress = "0x0000000000000000000000000000000000000000";
   return Promise.resolve({
     attestation: {
-      player: zeroAddress,
+      player: req.player,
       day: dayIndex(Date.now()),
-      guesses: 0,
+      guesses: req.guesses.length,
       won: false,
-      hardMode: false,
+      hardMode: req.hardMode,
       contract: zeroAddress,
       chainId: 42220,
       signature: "0xmock",
@@ -106,9 +112,16 @@ async function realSubmitGuess(req: SubmitGuessRequest): Promise<GuessResult> {
   return { marks: parsed.data.marks, won: parsed.data.won };
 }
 
-async function realGetAttestation(): Promise<Attestation> {
+async function realGetAttestation(
+  req: AttestationRequest,
+): Promise<Attestation> {
   const data = await fetchJson("/api/v1/puzzle/today/attestation", {
     method: "POST",
+    body: JSON.stringify({
+      player: req.player,
+      guesses: req.guesses,
+      hardMode: req.hardMode,
+    }),
   });
   const parsed = attestationSchema.safeParse(data);
   if (!parsed.success) {

@@ -24,6 +24,7 @@ export interface StatsModalProps {
   shareOptions?: ShareOptions | null;
   closesAt?: string | null;
   onChainStreak?: OnChainStreak | null;
+  settle?: { guesses: string[]; hardMode: boolean } | null;
 }
 
 export function StatsModal({
@@ -34,6 +35,7 @@ export function StatsModal({
   shareOptions = null,
   closesAt = null,
   onChainStreak = null,
+  settle = null,
 }: StatsModalProps) {
   const winPct =
     stats.played === 0 ? 0 : Math.round((stats.wins / stats.played) * 100);
@@ -64,7 +66,9 @@ export function StatsModal({
       />
       {shareOptions ? (
         <div className="mt-6 space-y-3 border-t border-tile-border pt-4">
-          <SettleResult />
+          {settle ? (
+            <SettleResult guesses={settle.guesses} hardMode={settle.hardMode} />
+          ) : null}
           <div className="flex items-center justify-between gap-4">
             <Countdown closesAt={closesAt} />
             <ShareButton options={shareOptions} />
