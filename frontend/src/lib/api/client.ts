@@ -1,4 +1,5 @@
-import { GameApiError } from "./errors";
+import { GameApiError, toErrorCode } from "./errors";
+import { errorEnvelopeSchema } from "./schemas";
 
 export const USE_REAL_BE = process.env.NEXT_PUBLIC_USE_REAL_BE === "true";
 const BASE_URL = process.env.NEXT_PUBLIC_BE_URL ?? "";
@@ -17,17 +18,21 @@ export async function fetchJson(
     throw new GameApiError("NETWORK", "Network request failed");
   }
 
+  const data: unknown = await response.json().catch(() => null);
+
   if (!response.ok) {
+    const parsed = errorEnvelopeSchema.safeParse(data);
+    if (parsed.success) {
+      throw new GameApiError(
+        toErrorCode(parsed.data.error.code),
+        parsed.data.error.message,
+      );
+    }
     throw new GameApiError(
       "BAD_RESPONSE",
       `Request failed (${response.status})`,
     );
   }
 
-  try {
-    const data: unknown = await response.json();
-    return data;
-  } catch {
-    throw new GameApiError("BAD_RESPONSE", "Invalid JSON response");
-  }
+  return data;
 }

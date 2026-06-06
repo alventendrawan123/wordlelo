@@ -46,3 +46,10 @@ export const attestationSchema = z.object({
   }),
 });
 export type Attestation = z.infer<typeof attestationSchema>;
+
+export const errorEnvelopeSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+  }),
+});

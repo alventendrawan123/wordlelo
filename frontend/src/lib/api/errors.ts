@@ -21,3 +21,17 @@ export class GameApiError extends Error {
 export function isGameApiError(error: unknown): error is GameApiError {
   return error instanceof GameApiError;
 }
+
+export function toErrorCode(code: string): GameApiErrorCode {
+  switch (code) {
+    case "INVALID_GUESS":
+    case "NOT_IN_WORD_LIST":
+    case "GAME_ALREADY_COMPLETE":
+    case "TOO_MANY_GUESSES":
+    case "UNAUTHORIZED":
+    case "RATE_LIMITED":
+      return code;
+    default:
+      return "BAD_RESPONSE";
+  }
+}
