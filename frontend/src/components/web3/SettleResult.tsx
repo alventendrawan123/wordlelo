@@ -8,13 +8,18 @@ import { isGameApiError } from "@/lib/api/errors";
 import { gameApi } from "@/lib/api/wordle";
 import { ExplorerTxLink } from "./ExplorerTxLink";
 
-export function SettleResult() {
-  const { isConnected, chainId } = useAccount();
+export interface SettleResultProps {
+  guesses: string[];
+  hardMode: boolean;
+}
+
+export function SettleResult({ guesses, hardMode }: SettleResultProps) {
+  const { address, isConnected, chainId } = useAccount();
   const { submit, isPending } = useSubmitResult();
   const [hash, setHash] = useState<`0x${string}` | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isConnected) {
+  if (!isConnected || !address) {
     return null;
   }
 
@@ -33,7 +38,11 @@ export function SettleResult() {
   const handleSettle = async () => {
     setError(null);
     try {
-      const { attestation } = await gameApi.getAttestation();
+      const { attestation } = await gameApi.getAttestation({
+        player: address,
+        guesses,
+        hardMode,
+      });
       setHash(await submit(attestation));
     } catch (err) {
       setError(isGameApiError(err) ? err.message : "Could not settle on-chain");

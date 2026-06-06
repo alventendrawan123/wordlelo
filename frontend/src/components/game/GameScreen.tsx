@@ -81,11 +81,10 @@ export function GameScreen() {
     }
   }, [game.message, showToast]);
 
+  const isOver = game.gameState === "won" || game.gameState === "lost";
+
   const shareOptions = useMemo<ShareOptions | null>(() => {
-    if (!game.puzzle) {
-      return null;
-    }
-    if (game.gameState !== "won" && game.gameState !== "lost") {
+    if (!game.puzzle || !isOver) {
       return null;
     }
     return {
@@ -97,7 +96,24 @@ export function GameScreen() {
       colorblind,
       rows: game.rows.map((row) => row.marks),
     };
-  }, [game.puzzle, game.gameState, game.rows, game.hardMode, colorblind]);
+  }, [
+    game.puzzle,
+    game.gameState,
+    game.rows,
+    game.hardMode,
+    colorblind,
+    isOver,
+  ]);
+
+  const settle = useMemo(() => {
+    if (!isOver) {
+      return null;
+    }
+    return {
+      guesses: game.rows.map((row) => row.guess),
+      hardMode: game.hardMode,
+    };
+  }, [isOver, game.rows, game.hardMode]);
 
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
@@ -128,6 +144,7 @@ export function GameScreen() {
         shareOptions={shareOptions}
         closesAt={game.puzzle?.closesAt ?? null}
         onChainStreak={onChainStreak}
+        settle={settle}
       />
       <SettingsModal
         open={modal === "settings"}
