@@ -81,6 +81,7 @@ export function useWordleGame(options: UseWordleGameOptions = {}) {
   const [gameState, setGameState] = useState<GameState>("in_progress");
   const [hardMode, setHardModeState] = useState(false);
   const [shakeRowIndex, setShakeRowIndex] = useState<number | null>(null);
+  const [revealRowIndex, setRevealRowIndex] = useState<number | null>(null);
   const [message, setMessage] = useState<GameMessage | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -168,6 +169,7 @@ export function useWordleGame(options: UseWordleGameOptions = {}) {
       const result = await gameApi.submitGuess({ guess: current, hardMode });
       const nextRows = [...rows, { guess: current, marks: result.marks }];
       setRows(nextRows);
+      setRevealRowIndex(rows.length);
       setKeyStates((prev) => mergeKeyStates(prev, current, result.marks));
       setCurrent("");
       if (result.won) {
@@ -243,6 +245,7 @@ export function useWordleGame(options: UseWordleGameOptions = {}) {
     gameState,
     hardMode,
     shakeRowIndex,
+    revealRowIndex,
     message,
     busy,
     handleKey,

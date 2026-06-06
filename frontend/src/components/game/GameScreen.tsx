@@ -25,6 +25,7 @@ interface BoardAreaProps {
   rows: SubmittedRow[];
   current: string;
   shakeRowIndex: number | null;
+  revealRowIndex: number | null;
 }
 
 function BoardArea({
@@ -33,6 +34,7 @@ function BoardArea({
   rows,
   current,
   shakeRowIndex,
+  revealRowIndex,
 }: BoardAreaProps) {
   if (loading) {
     return (
@@ -48,7 +50,12 @@ function BoardArea({
   }
   return (
     <div className="flex flex-1 items-center">
-      <Board rows={rows} current={current} shakeRowIndex={shakeRowIndex} />
+      <Board
+        rows={rows}
+        current={current}
+        shakeRowIndex={shakeRowIndex}
+        revealRowIndex={revealRowIndex}
+      />
     </div>
   );
 }
@@ -130,6 +137,7 @@ export function GameScreen() {
           rows={game.rows}
           current={game.current}
           shakeRowIndex={game.shakeRowIndex}
+          revealRowIndex={game.revealRowIndex}
         />
 
         <Keyboard keyStates={game.keyStates} onKey={game.handleKey} />
