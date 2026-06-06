@@ -10,13 +10,19 @@ export interface RowCell {
 export interface RowProps {
   cells: RowCell[];
   shake?: boolean;
+  reveal?: boolean;
 }
 
-export function Row({ cells, shake = false }: RowProps) {
+export function Row({ cells, shake = false, reveal = false }: RowProps) {
   return (
     <div className={`flex gap-1.5 ${shake ? "anim-shake" : ""}`}>
-      {cells.map((cell) => (
-        <Tile key={cell.id} letter={cell.letter} state={cell.state} />
+      {cells.map((cell, col) => (
+        <Tile
+          key={cell.id}
+          letter={cell.letter}
+          state={cell.state}
+          revealDelayMs={reveal ? col * 100 : null}
+        />
       ))}
     </div>
   );

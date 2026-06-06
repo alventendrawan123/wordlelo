@@ -11,6 +11,7 @@ export interface BoardProps {
   rows: BoardSubmittedRow[];
   current: string;
   shakeRowIndex?: number | null;
+  revealRowIndex?: number | null;
 }
 
 function buildRowCells(
@@ -36,7 +37,12 @@ function buildRowCells(
   });
 }
 
-export function Board({ rows, current, shakeRowIndex = null }: BoardProps) {
+export function Board({
+  rows,
+  current,
+  shakeRowIndex = null,
+  revealRowIndex = null,
+}: BoardProps) {
   const rowIndexes = Array.from({ length: MAX_GUESSES }, (_, i) => i);
 
   return (
@@ -46,6 +52,7 @@ export function Board({ rows, current, shakeRowIndex = null }: BoardProps) {
           key={`row-${rowIndex}`}
           cells={buildRowCells(rowIndex, rows, current)}
           shake={rowIndex === shakeRowIndex}
+          reveal={rowIndex === revealRowIndex}
         />
       ))}
     </section>
