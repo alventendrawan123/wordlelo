@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
@@ -29,6 +30,8 @@ export const viewport: Viewport = {
   ],
 };
 
+const THEME_BOOTSTRAP = `try{var s=JSON.parse(localStorage.getItem("wordlelo:settings")||"{}");var d=typeof s.dark==="boolean"?s.dark:matchMedia("(prefers-color-scheme: dark)").matches;var e=document.documentElement;e.dataset.theme=d?"dark":"light";if(s.colorblind)e.dataset.colorblind="true";}catch(_){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,6 +43,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Script id="theme-bootstrap" strategy="beforeInteractive">
+          {THEME_BOOTSTRAP}
+        </Script>
         <Providers>{children}</Providers>
       </body>
     </html>
