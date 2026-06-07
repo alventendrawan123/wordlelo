@@ -21,6 +21,7 @@
     "@fastify/cors": "^10.0.1",
     "@wordlelo/contracts": "workspace:*",
     "@wordlelo/core": "workspace:*",
+    "dotenv": "^16.4.7",
     "drizzle-orm": "^0.36.4",
     "fastify": "^5.2.0",
     "postgres": "^3.4.5",

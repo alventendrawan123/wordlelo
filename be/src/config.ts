@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 /** Runtime configuration, read from the environment with safe dev defaults. */
 export const config = {
   port: Number(process.env.PORT ?? 3001),
