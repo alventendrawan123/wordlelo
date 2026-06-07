@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import { registerErrorHandler } from "./errors.js";
 import { attestationRoutes } from "./routes/attestation.js";
 import { puzzleRoutes } from "./routes/puzzle.js";
+import { statsRoutes } from "./routes/stats.js";
 
 /**
  * Build the Wordlelo backend (Celo) Fastify app.
@@ -26,6 +27,7 @@ export function buildServer(): FastifyInstance {
 
   app.register(puzzleRoutes, { prefix: "/api/v1/puzzle" });
   app.register(attestationRoutes, { prefix: "/api/v1/puzzle" });
+  app.register(statsRoutes, { prefix: "/api/v1" });
 
   return app;
 }
