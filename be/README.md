@@ -96,6 +96,37 @@ the result for the contract.
 - **Errors:** `400 BAD_REQUEST` (missing/invalid player, or game not complete),
   `422 NOT_IN_WORD_LIST` (a guess isn't a dictionary word), `503` (signer not configured server-side).
 
+## GET `/api/v1/leaderboard`
+
+Aggregate leaderboard (most wins, then most played), built from on-chain settles. Optional `?limit=` (default 50, max 100).
+
+```json
+{
+  "leaderboard": [
+    { "player": "0x8143…", "played": 12, "wins": 9 },
+    { "player": "0x1aa2…", "played": 7, "wins": 5 }
+  ]
+}
+```
+
+## GET `/api/v1/me/results?player=0x…`
+
+A single player's settled-result history (newest day first). Requires a valid `?player=` address (else `400 BAD_REQUEST`).
+
+```json
+{
+  "results": [
+    { "player": "0x8143…", "day": 521, "guesses": 3, "won": true, "hardMode": false, "txHash": "0x…", "blockNumber": 68690123, "settledAt": "2026-06-06T12:00:00.000Z" }
+  ]
+}
+```
+- These two are **DB-backed** (Supabase Postgres). They return `503` if the server has no `DATABASE_URL`.
+- The data is populated by the **indexer**, which reads the contract's `ResultSubmitted` events into Postgres. Run it as a worker:
+  ```bash
+  pnpm --filter @wordlelo/be indexer        # catch up + poll
+  pnpm --filter @wordlelo/be indexer:once   # backfill once and exit
+  ```
+
 ## GET `/health`
 ```json
 { "status": "ok", "service": "wordlelo-be", "chain": "celo" }

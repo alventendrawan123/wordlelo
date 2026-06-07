@@ -17,4 +17,7 @@ export const config = {
 
   /** Postgres (Supabase) connection string. Required only for the DB-backed leaderboard/history. */
   databaseUrl: process.env.DATABASE_URL ?? "",
+
+  /** Celo RPC endpoint for reading on-chain events (the indexer). */
+  celoRpcUrl: process.env.CELO_RPC_URL ?? "https://forno.celo.org",
 } as const;

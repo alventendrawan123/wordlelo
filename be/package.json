@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "commit:day": "tsx src/scripts/commit.ts",
     "reveal:day": "tsx src/scripts/reveal.ts",
+    "indexer": "tsx src/scripts/indexer.ts",
+    "indexer:once": "tsx src/scripts/indexer.ts --once",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
