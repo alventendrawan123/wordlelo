@@ -12,4 +12,7 @@ export const config = {
 
   /** Allowed CORS origin(s) for the frontend. `*` in dev; pin the FE URL in prod. */
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
+
+  /** Postgres (Supabase) connection string. Required only for the DB-backed leaderboard/history. */
+  databaseUrl: process.env.DATABASE_URL ?? "",
 } as const;
