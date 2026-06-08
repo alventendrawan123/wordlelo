@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { NetworkBadge } from "@/components/web3/NetworkBadge";
 import { WalletButton } from "@/components/web3/WalletButton";
 
@@ -25,6 +26,13 @@ export function Header({
         Wordlelo
       </h1>
       <div className="flex flex-1 items-center justify-end gap-1">
+        <Link
+          href="/leaderboard"
+          aria-label="Leaderboard"
+          className={ICON_BUTTON}
+        >
+          🏆
+        </Link>
         <button
           type="button"
           onClick={onOpenHelp}
