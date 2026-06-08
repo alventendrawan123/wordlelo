@@ -10,6 +10,10 @@ import {
   type DailyPuzzle,
   dailyPuzzleSchema,
   type GuessResult,
+  type LeaderboardEntry,
+  leaderboardSchema,
+  type PlayerResult,
+  playerResultsSchema,
 } from "./schemas";
 
 const EPOCH_UTC = Date.UTC(2025, 0, 1);
@@ -130,8 +134,54 @@ async function realGetAttestation(
   return parsed.data;
 }
 
+function mockGetLeaderboard(): Promise<LeaderboardEntry[]> {
+  return Promise.resolve([
+    {
+      player: "0x1b444313a61be61830d4983dce350a018c288600",
+      played: 12,
+      wins: 9,
+    },
+    {
+      player: "0x8143c0b1442820bdf2e0efc71785c4497cadf751",
+      played: 8,
+      wins: 5,
+    },
+    {
+      player: "0x31f26f77f73dbb7ac9a03415d73d46ae81cf8af1",
+      played: 5,
+      wins: 2,
+    },
+  ]);
+}
+
+function mockGetMyResults(_player: string): Promise<PlayerResult[]> {
+  return Promise.resolve([]);
+}
+
+async function realGetLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
+  const data = await fetchJson(`/api/v1/leaderboard?limit=${limit}`);
+  const parsed = leaderboardSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new GameApiError("BAD_RESPONSE", "Malformed leaderboard response");
+  }
+  return parsed.data.leaderboard;
+}
+
+async function realGetMyResults(player: string): Promise<PlayerResult[]> {
+  const data = await fetchJson(
+    `/api/v1/me/results?player=${player.toLowerCase()}`,
+  );
+  const parsed = playerResultsSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new GameApiError("BAD_RESPONSE", "Malformed results response");
+  }
+  return parsed.data.results;
+}
+
 export const gameApi = {
   getDailyPuzzle: USE_REAL_BE ? realGetDailyPuzzle : mockGetDailyPuzzle,
   submitGuess: USE_REAL_BE ? realSubmitGuess : mockSubmitGuess,
   getAttestation: USE_REAL_BE ? realGetAttestation : mockGetAttestation,
+  getLeaderboard: USE_REAL_BE ? realGetLeaderboard : mockGetLeaderboard,
+  getMyResults: USE_REAL_BE ? realGetMyResults : mockGetMyResults,
 };

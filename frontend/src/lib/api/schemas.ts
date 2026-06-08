@@ -53,3 +53,30 @@ export const errorEnvelopeSchema = z.object({
     message: z.string(),
   }),
 });
+
+export const leaderboardEntrySchema = z.object({
+  player: z.string(),
+  played: z.number().int(),
+  wins: z.number().int(),
+});
+export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
+
+export const leaderboardSchema = z.object({
+  leaderboard: z.array(leaderboardEntrySchema),
+});
+
+export const playerResultSchema = z.object({
+  player: z.string(),
+  day: z.number().int(),
+  guesses: z.number().int(),
+  won: z.boolean(),
+  hardMode: z.boolean(),
+  txHash: z.string(),
+  blockNumber: z.number().int(),
+  settledAt: z.string(),
+});
+export type PlayerResult = z.infer<typeof playerResultSchema>;
+
+export const playerResultsSchema = z.object({
+  results: z.array(playerResultSchema),
+});
