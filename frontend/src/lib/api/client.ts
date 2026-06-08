@@ -2,7 +2,6 @@ import { GameApiError, toErrorCode } from "./errors";
 import { errorEnvelopeSchema } from "./schemas";
 
 export const USE_REAL_BE = process.env.NEXT_PUBLIC_USE_REAL_BE === "true";
-const BASE_URL = process.env.NEXT_PUBLIC_BE_URL ?? "";
 
 export async function fetchJson(
   path: string,
@@ -10,7 +9,7 @@ export async function fetchJson(
 ): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(path, {
       ...init,
       headers: { "Content-Type": "application/json", ...init?.headers },
     });
