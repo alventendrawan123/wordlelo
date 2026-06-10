@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   applicationName: "Wordlelo",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   appleWebApp: { capable: true, title: "Wordlelo", statusBarStyle: "default" },
+  other: {
+    "talentapp:project_verification":
+      "8354c282dd58e304c84ff7119305f2e4cbad1d660640183d0f61b430c07ad63e9dcbb64879b9b73f8755226b0b86a73bb585373f856f9c03952b862df6b6b15c",
+  },
 };
 
 export const viewport: Viewport = {
