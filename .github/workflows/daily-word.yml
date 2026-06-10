@@ -1,0 +1,52 @@
+name: daily-word-commit
+
+# Keeps a rolling buffer of upcoming daily-word commitments on-chain, so
+# players can always settle today's result. The commit:buffer script is
+# idempotent — already-committed days are skipped — so a missed run is
+# self-healing on the next run.
+
+on:
+  schedule:
+    # 01:00 UTC daily, just after the UTC day rollover the day-index uses.
+    - cron: "0 1 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-word-commit
+  cancel-in-progress: false
+
+jobs:
+  commit:
+    name: commit upcoming daily words on-chain
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (be + its workspace deps)
+        run: pnpm --filter "@wordlelo/be..." build
+
+      - name: Commit rolling buffer of upcoming days
+        run: pnpm --filter @wordlelo/be commit:buffer
+        env:
+          SERVER_SECRET: ${{ secrets.SERVER_SECRET }}
+          WORD_SETTER_PRIVATE_KEY: ${{ secrets.WORD_SETTER_PRIVATE_KEY }}
+          CELO_RPC_URL: ${{ secrets.CELO_RPC_URL }}
+          COMMIT_BUFFER_DAYS: "14"

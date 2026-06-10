@@ -12,6 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "commit:day": "tsx src/scripts/commit.ts",
+    "commit:buffer": "node dist/scripts/commit-buffer.js",
+    "commit:buffer:dev": "tsx src/scripts/commit-buffer.ts",
     "reveal:day": "tsx src/scripts/reveal.ts",
     "indexer": "tsx src/scripts/indexer.ts",
     "indexer:once": "tsx src/scripts/indexer.ts --once",
