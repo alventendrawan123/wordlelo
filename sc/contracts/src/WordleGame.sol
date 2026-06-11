@@ -241,10 +241,12 @@ contract WordleGame is
     // Admin
     // ---------------------------------------------------------------------
 
+    /// @notice Pause the game — blocks `submitResult`. Commit/reveal are unaffected.
     function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
+    /// @notice Resume the game after a pause, re-enabling `submitResult`.
     function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
@@ -258,10 +260,15 @@ contract WordleGame is
     // Views
     // ---------------------------------------------------------------------
 
+    /// @notice A player's settled result for a day (zero-valued `Result` if unplayed).
+    /// @param player the player address
+    /// @param day puzzle-day index
     function getResult(address player, uint256 day) external view returns (Result memory) {
         return results[player][day];
     }
 
+    /// @notice A player's streak tracker (current / max / lastDay).
+    /// @param player the player address
     function getStreak(address player) external view returns (Streak memory) {
         return streaks[player];
     }
@@ -275,6 +282,7 @@ contract WordleGame is
     // UUPS
     // ---------------------------------------------------------------------
 
+    /// @dev UUPS upgrade gate — only `UPGRADER_ROLE` may authorize a new implementation.
     function _authorizeUpgrade(address newImplementation)
         internal
         override
