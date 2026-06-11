@@ -1,9 +1,12 @@
-name: daily-word-commit
+name: daily-word
 
-# Keeps a rolling buffer of upcoming daily-word commitments on-chain, so
-# players can always settle today's result. The commit:buffer script is
-# idempotent — already-committed days are skipped — so a missed run is
-# self-healing on the next run.
+# Daily on-chain upkeep of the commit–reveal:
+#   1. commit:buffer — keeps a rolling buffer of upcoming daily-word commitments
+#      so players can always settle today's result.
+#   2. reveal:buffer — reveals recently-closed days so anyone can verify each
+#      puzzle was fair (keccak256(word, salt) == committed hash).
+# Both scripts are idempotent — already-committed / already-revealed days are
+# skipped — so a missed run is self-healing on the next run.
 
 on:
   schedule:
@@ -50,3 +53,11 @@ jobs:
           WORD_SETTER_PRIVATE_KEY: ${{ secrets.WORD_SETTER_PRIVATE_KEY }}
           CELO_RPC_URL: ${{ secrets.CELO_RPC_URL }}
           COMMIT_BUFFER_DAYS: "14"
+
+      - name: Reveal recently-closed days
+        run: pnpm --filter @wordlelo/be reveal:buffer
+        env:
+          SERVER_SECRET: ${{ secrets.SERVER_SECRET }}
+          WORD_SETTER_PRIVATE_KEY: ${{ secrets.WORD_SETTER_PRIVATE_KEY }}
+          CELO_RPC_URL: ${{ secrets.CELO_RPC_URL }}
+          REVEAL_LOOKBACK_DAYS: "14"
