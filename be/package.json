@@ -15,6 +15,8 @@
     "commit:buffer": "node dist/scripts/commit-buffer.js",
     "commit:buffer:dev": "tsx src/scripts/commit-buffer.ts",
     "reveal:day": "tsx src/scripts/reveal.ts",
+    "reveal:buffer": "node dist/scripts/reveal-buffer.js",
+    "reveal:buffer:dev": "tsx src/scripts/reveal-buffer.ts",
     "indexer": "tsx src/scripts/indexer.ts",
     "indexer:once": "tsx src/scripts/indexer.ts --once",
     "indexer:start": "node dist/scripts/indexer.js",
