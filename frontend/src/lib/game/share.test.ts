@@ -61,6 +61,20 @@ describe("buildShareText", () => {
     expect(text).toContain("🟧🟦⬜⬜⬜");
   });
 
+  it("appends the invite link below the grid when a url is given", () => {
+    const text = buildShareText({
+      day: 1,
+      guesses: 2,
+      maxGuesses: 6,
+      won: true,
+      hardMode: false,
+      colorblind: false,
+      rows,
+      url: "https://wordlelo.app",
+    });
+    expect(text.endsWith("\n\nhttps://wordlelo.app")).toBe(true);
+  });
+
   it("never leaks letters in the grid", () => {
     const text = buildShareText({
       day: 1,

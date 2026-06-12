@@ -11,7 +11,10 @@ export function ShareButton({ options }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    const text = buildShareText(options);
+    const url =
+      options.url ??
+      (typeof window === "undefined" ? undefined : window.location.origin);
+    const text = buildShareText({ ...options, url });
     try {
       if (navigator.share) {
         await navigator.share({ text });

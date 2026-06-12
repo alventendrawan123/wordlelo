@@ -20,6 +20,7 @@ export interface ShareOptions {
   hardMode: boolean;
   colorblind: boolean;
   rows: LetterState[][];
+  url?: string;
 }
 
 export function buildShareText(opts: ShareOptions): string {
@@ -30,5 +31,6 @@ export function buildShareText(opts: ShareOptions): string {
   const grid = opts.rows
     .map((row) => row.map((mark) => palette[mark]).join(""))
     .join("\n");
-  return `${header}\n${grid}`;
+  const body = `${header}\n${grid}`;
+  return opts.url ? `${body}\n\n${opts.url}` : body;
 }
