@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useSubmitResult } from "@/hooks/useSubmitResult";
 import { USE_REAL_BE } from "@/lib/api/client";
 import { isGameApiError } from "@/lib/api/errors";
 import { gameApi } from "@/lib/api/wordle";
+import { CELO_MAINNET } from "@/lib/web3/contract";
 import { ExplorerTxLink } from "./ExplorerTxLink";
 
 export interface SettleResultProps {
@@ -13,8 +14,26 @@ export interface SettleResultProps {
   hardMode: boolean;
 }
 
+/**
+ * Pull a human-readable message out of a wagmi/viem error instead of swallowing it.
+ * Without this the user (and we) only ever saw "Could not settle on-chain", which
+ * hides the real cause — wrong network, user rejection, insufficient gas, revert, …
+ */
+function settleErrorMessage(err: unknown): string {
+  if (isGameApiError(err)) {
+    return err.message;
+  }
+  if (err && typeof err === "object") {
+    const e = err as { shortMessage?: string; message?: string };
+    if (e.shortMessage) return e.shortMessage;
+    if (e.message) return e.message;
+  }
+  return "Could not settle on-chain";
+}
+
 export function SettleResult({ guesses, hardMode }: SettleResultProps) {
   const { address, isConnected, chainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { submit, isPending } = useSubmitResult();
   const [hash, setHash] = useState<`0x${string}` | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +57,12 @@ export function SettleResult({ guesses, hardMode }: SettleResultProps) {
   const handleSettle = async () => {
     setError(null);
     try {
+      // The WordleGame contract only exists on Celo mainnet (42220), so the wallet
+      // must be on that chain before the write. A wallet left on any other network
+      // (a common case on desktop) otherwise fails the write with an opaque error.
+      if (chainId !== CELO_MAINNET) {
+        await switchChainAsync({ chainId: CELO_MAINNET });
+      }
       const { attestation } = await gameApi.getAttestation({
         player: address,
         guesses,
@@ -45,7 +70,7 @@ export function SettleResult({ guesses, hardMode }: SettleResultProps) {
       });
       setHash(await submit(attestation));
     } catch (err) {
-      setError(isGameApiError(err) ? err.message : "Could not settle on-chain");
+      setError(settleErrorMessage(err));
     }
   };
 
