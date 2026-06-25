@@ -1,0 +1,33 @@
+name: keepalive
+
+# Pings the backend /health every ~12 min so the Render free instance does not
+# spin down (which would cold-start the next real player in ~50s). Set the repo
+# variable BE_HEALTH_URL to the deployed health URL, e.g.
+#   https://wordlelo-be.onrender.com/health
+# (Repo → Settings → Secrets and variables → Actions → Variables → New variable).
+# Stays well within Render free's 750 instance-hours/month. Delete this workflow
+# if you move to an always-on host (paid Railway / Koyeb).
+
+on:
+  schedule:
+    - cron: "*/12 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health
+        env:
+          URL: ${{ vars.BE_HEALTH_URL }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "BE_HEALTH_URL repo variable not set — skipping."
+            exit 0
+          fi
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$URL")
+          echo "GET $URL -> HTTP $code"
+          test "$code" = "200"

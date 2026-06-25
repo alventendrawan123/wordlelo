@@ -1,0 +1,32 @@
+# Render Blueprint — free deploy of the Wordlelo backend (@wordlelo/be).
+# In Render: New → Blueprint → connect this repo. Render reads this file, builds the
+# root Dockerfile, and starts the service. Then set the four `sync: false` secrets in
+# the dashboard (they are intentionally NOT stored in the repo).
+#
+# Free plan note: the instance spins down after ~15 min idle (first request after that
+# cold-starts in ~50s). Optional keep-alive: ping /health every ~10 min from a cron.
+services:
+  - type: web
+    name: wordlelo-be
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore # closest to the Supabase ap-southeast-1 DB + Indonesia users
+    branch: main
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Secrets — set these in the Render dashboard (Environment tab). Never commit them.
+      - key: SERVER_SECRET
+        sync: false # MUST match the value used by the original deploy, or past
+        # commit→reveal salts stop matching. Reuse the old one.
+      - key: SETTLER_PRIVATE_KEY
+        sync: false # wallet holding SETTLER_ROLE on the WordleGame contract
+      - key: DATABASE_URL
+        sync: false # Supabase pooler URL (leaderboard/history; game works without it)
+      - key: CORS_ORIGIN
+        sync: false # the live frontend origin, e.g. https://wordlelo.vercel.app
+      # Non-secret default — fine to keep in the repo.
+      - key: CELO_RPC_URL
+        value: https://forno.celo.org
