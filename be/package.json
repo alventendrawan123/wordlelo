@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "an-array-of-english-words": "^2.0.0",
     "drizzle-kit": "^0.28.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
