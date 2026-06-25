@@ -1,0 +1,20 @@
+# Rebuilt inside the image
+**/node_modules
+**/dist
+**/.next
+
+# Secrets must never be baked into the image — supplied as host env vars at runtime
+**/.env
+**/.env.local
+
+# Not needed for the backend build (sc isn't a pnpm workspace member)
+sc
+docs
+cache
+*.zip
+
+# VCS / misc
+.git
+.github
+.gitignore
+README.md
