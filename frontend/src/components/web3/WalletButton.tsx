@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useConnect, useDisconnect } from "wagmi";
 import { useMiniPay } from "@/hooks/useMiniPay";
 
@@ -11,8 +12,13 @@ export function WalletButton() {
   const { isMiniPay, isConnected, address } = useMiniPay();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
+  const [mounted, setMounted] = useState(false);
 
-  if (isConnected && address) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (mounted && isConnected && address) {
     return (
       <button
         type="button"
@@ -25,7 +31,7 @@ export function WalletButton() {
     );
   }
 
-  if (isMiniPay) {
+  if (mounted && isMiniPay) {
     return null;
   }
 
